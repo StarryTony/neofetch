@@ -9,7 +9,7 @@
 # https://github.com/dylanaraps/
 
 # Neofetch version.
-version="3.3.1-git"
+version="3.3.0"
 
 bash_version="${BASH_VERSION/.*}"
 sys_locale="${LANG:-C}"
@@ -160,7 +160,6 @@ get_distro() {
                 fi
             fi
             distro="$(trim_quotes "$distro")"
-            distro="${distro/'NAME='}"
         ;;
 
         "Mac OS X")
@@ -188,7 +187,7 @@ get_distro() {
                     case "$osx_version" in
                         "10."[4-7]*) distro="${distro/${codename}/Mac OS X}" ;;
                         "10."[8-9]* | "10.1"[0-1]*) distro="${distro/${codename}/OS X}" ;;
-                        "10.1"[2-3]*) distro="${distro/${codename}/macOS}" ;;
+                        "10.12"*) distro="${distro/${codename}/macOS}" ;;
                     esac
                     distro="${distro/ ${osx_build}}"
                 ;;
@@ -279,16 +278,13 @@ get_model() {
         "iPhone OS")
             case "$machine_arch" in
                 "iPad1,1") model="iPad" ;;
-                "iPad2,"[1-4]) model="iPad 2" ;;
-                "iPad3,"[1-3]) model="iPad 3" ;;
-                "iPad3,"[4-6]) model="iPad 4" ;;
-                "iPad6,11" | "iPad 6,12") model="iPad 5" ;;
+                "iPad2,"[1-4]) model="iPad2" ;;
+                "iPad3,"[1-3]) model="iPad3" ;;
+                "iPad3,"[4-6]) model="iPad4" ;;
                 "iPad4,"[1-3]) model="iPad Air" ;;
                 "iPad5,"[3-4]) model="iPad Air 2" ;;
                 "iPad6,"[7-8]) model="iPad Pro (12.9 Inch)" ;;
                 "iPad6,"[3-4]) model="iPad Pro (9.7 Inch)" ;;
-                "iPad7,"[1-2]) model="iPad Pro 2 (12.9 Inch)" ;;
-                "iPad7,"[3-4]) model="iPad Pro (10.5 Inch)" ;;
                 "iPad2,"[5-7]) model="iPad mini" ;;
                 "iPad4,"[4-6]) model="iPad mini 2" ;;
                 "iPad4,"[7-9]) model="iPad mini 3" ;;
@@ -309,9 +305,6 @@ get_model() {
                 "iPhone8,4") model="iPhone SE" ;;
                 "iPhone9,1" | "iPhone9,3") model="iPhone 7" ;;
                 "iPhone9,2" | "iPhone9,4") model="iPhone 7 Plus" ;;
-                "iPhone10,1" | "iPhone10,4") model="iPhone 8" ;;
-                "iPhone10,2" | "iPhone10,5") model="iPhone 8 Plus" ;;
-                "iPhone10,3" | "iPhone10,6") model="iPhone X" ;;
 
                 "iPod1,1") model="iPod touch" ;;
                 "ipod2,1") model="iPod touch 2G" ;;
@@ -352,8 +345,6 @@ get_model() {
     model="${model//Default string}"
     model="${model//Not Specified}"
     model="${model//Type1ProductConfigId}"
-    model="${model//INVALID}"
-    model="${model//�}"
 
     case "$model" in
         "Standard PC"*) model="KVM/QEMU (${model})" ;;
@@ -714,11 +705,11 @@ get_wm() {
     else
         case "$os" in
             "Mac OS X")
-                ps_line="$(ps -e | grep -o '[S]pectacle\|[A]methyst\|[k]wm\|[c]hun[k]wm')"
+                ps_line="$(ps -e | grep -o '[S]pectacle\|[A]methyst\|[k]wm\|[c]hunkwm')"
 
                 case "$ps_line" in
-                    *"chunkwm"*) wm="chunkwm" ;;
                     *"kwm"*) wm="Kwm" ;;
+                    *"chunkwm"*) wm="chunkwm" ;;
                     *"Amethyst"*) wm="Amethyst" ;;
                     *"Spectacle"*) wm="Spectacle" ;;
                     *) wm="Quartz Compositor" ;;
@@ -1420,7 +1411,7 @@ get_song() {
     player="$(ps x | awk '!(/ awk|Helper|Cache|ibus|indicator/) && /mpd|mopidy|cmus|mocp|spotify|\
 Google Play|iTunes.app|rhythmbox|banshee|amarok|deadbeef|audacious|\
 xmms2d|gnome-music|lollypop|clementine|pragha|exaile|juk|bluemindo|\
-guayadeque|yarock|qmmp|quodlibet|deepin-music|tomahawk|pogo|elisa/ {printf $5 " " $6; exit}')"
+guayadeque|yarock|qmmp|quodlibet|deepin-music|tomahawk|pogo/ {printf $5 " " $6; exit}')"
 
     get_song_dbus() {
         # Multiple players use an almost identical dbus command to get the information.
@@ -1451,7 +1442,6 @@ guayadeque|yarock|qmmp|quodlibet|deepin-music|tomahawk|pogo|elisa/ {printf $5 " 
         "yarock"*)       get_song_dbus "yarock" ;;
         "deepin-music"*) get_song_dbus "deepinmusic" ;;
         "tomahawk"*)     get_song_dbus "tomahawk" ;;
-        "elisa"*)        get_song_dbus "elisa" ;;
 
         "audacious"*)
             song="$(audtool current-song)"
@@ -1547,18 +1537,14 @@ get_resolution() {
                               awk '/Resolution:/ {printf $2"x"$4" @ "$6"Hz, "}')"
             fi
 
-            if [[ -e "/Library/Preferences/com.apple.windowserver.plist" ]]; then
-                scale_factor="$(PlistBuddy -c "Print DisplayAnyUserSets:0:0:Resolution" \
-                                /Library/Preferences/com.apple.windowserver.plist)"
-            else
-                scale_factor=""
-            fi
+            scale_factor="$(PlistBuddy -c "Print DisplayAnyUserSets:0:0:Resolution" \
+                            /Library/Preferences/com.apple.windowserver.plist)"
 
             # If no refresh rate is empty.
             [[ "$resolution" == *"@ Hz"* ]] && \
                 resolution="${resolution//@ Hz}"
 
-            [[ "${scale_factor%.*}" == 2 ]] && \
+            ((${scale_factor%.*} == 2)) && \
                 resolution="${resolution// @/@2x @}"
 
             if [[ "$refresh_rate" == "off" ]]; then
@@ -1632,12 +1618,7 @@ get_style() {
                     kde_config_file="${kde_config_dir}/kdeglobals"
 
                     kde_theme="$(grep "^${kde}" "$kde_config_file")"
-                    kde_theme="${kde_theme/*=}"
-                    if [[ "$kde" == "font" ]]; then
-                        kde_font_size="${kde_theme#*,}"
-                        kde_font_size="${kde_font_size/,*}"
-                        kde_theme="${kde_theme/,*} ${kde_theme/*,} ${kde_font_size}"
-                    fi
+                    kde_theme="${kde_theme/${kde}*=}"
                     kde_theme="$(uppercase "$kde_theme") [KDE], "
                 else
                     err "Theme: KDE config files not found, skipping."
@@ -2265,13 +2246,7 @@ get_install_date() {
             return
         ;;
 
-        *"HLOPRSTUWabc"*) # macOS ls
-            install_date="$(ls -dlctUT "$install_file" | awk '{printf $9 " " $6 " "$7 " " $8}')"
-        ;;
-
-        *)
-            install_date="$(ls -dlctT "$install_file" | awk '{printf $9 " " $6 " " $7 " " $8}')"
-        ;;
+        *) install_date="$(ls -dlctT "$install_file" | awk '{printf $9 " " $6 " "$7 " " $8}')" ;;
     esac
 
     install_date="${install_date//-/ }"
@@ -2290,13 +2265,6 @@ get_gpu_driver() {
             gpu_driver="$(lspci -nnk | awk -F ': ' \
                           '/Display|3D|VGA/{nr[NR+2]}; NR in nr {printf $2 ", "}')"
             gpu_driver="${gpu_driver%, }"
-        ;;
-        "Mac OS X")
-            if [[ "$(kextstat | grep "GeForceWeb")" != "" ]]; then
-                gpu_driver="Nvidia Web Driver"
-            else
-                gpu_driver="macOS Default Graphics Driver"
-            fi
         ;;
     esac
 }
@@ -2405,8 +2373,8 @@ get_ascii() {
         [[ "$image_source" =~ \.(png|jpg|jpe|jpeg|gif)$ ]] && \
             err "Image: Source is image file but ascii backend was selected. Using distro ascii."
 
-        if [[ -d "ASCIIDIR" ]]; then
-            ascii_dir="ASCIIDIR"
+        if [[ -d "/usr/local/Cellar/neofetch/3.3.0/share/neofetch/ascii/distro" ]]; then
+            ascii_dir="/usr/local/Cellar/neofetch/3.3.0/share/neofetch/ascii/distro"
         else
             [[ -z "$script_dir" ]] && script_dir="$(get_full_path "$0")"
             ascii_dir="${script_dir%/*}/ascii/distro"
@@ -2464,14 +2432,32 @@ get_image_source() {
                 files=("${image_source%/}"/*.{png,jpg,jpeg,jpe,gif,svg})
                 shopt -u nullglob
                 image="${files[RANDOM % ${#files[@]}]}"
-
+                if [[ "$audio_source" == "" ]]; then
+                    audio=${image%.*}".mp3"
+                fi
             else
                 image="$image_source"
+                if [[ "$audio_source" == "" ]]; then
+                    audio=${image%.*}".mp3"
+                fi
             fi
         ;;
     esac
 
     err "Image: Using image '$image'"
+}
+
+get_audio_source(){
+    if [[ "$audio_source" != "" ]]; then
+        # Get the absolute path.
+        audio_source="$(get_full_path "$audio_source")"
+
+        if [[ -f "$audio_source" ]]; then
+            audio="$audio_source"
+        fi
+    fi
+
+    err "Audio: Using audio '$audio'"
 }
 
 get_wallpaper() {
@@ -2516,7 +2502,7 @@ get_wallpaper() {
 
                 *)
                     if type -p feh >/dev/null && [[ -f "${HOME}/.fehbg" ]]; then
-                        image="$(awk -F\' '/feh/ {printf $(NF-1)}' "${HOME}/.fehbg")"
+                        image="$(awk -F\' '/feh/ {printf $2}' "${HOME}/.fehbg")"
 
                     elif type -p nitrogen >/dev/null; then
                         image="$(awk -F'=' '/file/ {printf $2;exit;}' \
@@ -2686,7 +2672,7 @@ get_image_size() {
 make_thumbnail() {
     # Name the thumbnail using variables so we can
     # use it later.
-    image_name="$crop_mode-$crop_offset-$width-$height-${image//'/'/_}"
+    image_name="$crop_mode-$crop_offset-$width-$height-${image##*/}"
 
     # Handle file extensions.
     case "${image##*.}" in
@@ -2755,6 +2741,8 @@ make_thumbnail() {
 
     # The final image.
     image="$thumbnail_dir/$image_name"
+
+    err "Image: Using thumbnail image '$image'"
 }
 
 display_image() {
@@ -2813,6 +2801,12 @@ display_image() {
             zws="\xE2\x80\x8B\x20"
         ;;
     esac
+}
+
+play_audio(){
+    get_audio_source
+
+    afplay "$audio" &
 }
 
 to_ascii() {
@@ -3227,11 +3221,6 @@ get_distro_colors() {
             ascii_file="cloveros"
         ;;
 
-        "Container Linux by CoreOS"*)
-            set_colors 4 7 1
-            ascii_file="coreos"
-        ;;
-
         "crux_small")
             set_colors 4 5 7 6
             ascii_file="crux_small"
@@ -3412,11 +3401,6 @@ get_distro_colors() {
             ascii_file="lubuntu"
         ;;
 
-        "Lunar"*)
-            set_colors 4 7 3
-            ascii_file="lunar"
-        ;;
-
         "mac"*"_small")
             set_colors 2 3 1 5 4
             ascii_file="mac_small"
@@ -3570,11 +3554,6 @@ get_distro_colors() {
         "Peppermint"*)
             set_colors 1 7 3
             ascii_file="peppermint"
-        ;;
-
-        "Pop!_OS"*)
-            set_colors 6 7
-            ascii_file="pop_os"
         ;;
 
         "Porteus"*)
@@ -3920,8 +3899,8 @@ get_full_path() {
 }
 
 get_default_config() {
-    if [[ -f "CONFDIR/config.conf" ]]; then
-        default_config="CONFDIR/config.conf"
+    if [[ -f "/usr/local/etc/neofetch/config.conf" ]]; then
+        default_config="/usr/local/etc/neofetch/config.conf"
 
     else
         [[ -z "$script_dir" ]] && script_dir="$(get_full_path "$0")"
@@ -3953,8 +3932,8 @@ get_user_config() {
     elif [[ -f "${XDG_CONFIG_HOME}/neofetch/config.conf" ]]; then
         config_file="${XDG_CONFIG_HOME}/neofetch/config.conf"
 
-    elif [[ -f "CONFDIR/config.conf" ]]; then
-        cp "CONFDIR/config.conf" "${XDG_CONFIG_HOME}/neofetch"
+    elif [[ -f "/usr/local/etc/neofetch/config.conf" ]]; then
+        cp "/usr/local/etc/neofetch/config.conf" "${XDG_CONFIG_HOME}/neofetch"
         config_file="${XDG_CONFIG_HOME}/neofetch/config.conf"
 
     else
@@ -4457,6 +4436,10 @@ IMAGE:
 
     --clean                     Delete cached files and thumbnails.
 
+AUDIO:
+    --audio_source source       Which audio file to use.
+                                Possible values: '', '/path/to/audio'
+
 SCREENSHOT:
     -s, --scrot /path/to/img    Take a screenshot, if path is left empty the screen-
                                 shot function will use \$scrot_dir and \$scrot_name.
@@ -4641,6 +4624,9 @@ get_args() {
                 exit
             ;;
 
+            # Audio options
+            "--audio_source") audio_source="$2" ;;
+
             "--ascii_colors")
                 unset ascii_colors
                 for arg in "$2" "$3" "$4" "$5" "$6" "$7"; do
@@ -4726,6 +4712,7 @@ main() {
     old_functions
     get_cache_dir
     print_info
+    play_audio
     dynamic_prompt
 
     # w3m-img: Draw the image a second time to fix
