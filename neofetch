@@ -2462,15 +2462,11 @@ get_image_source() {
                 files=("${image_source%/}"/*.{png,jpg,jpeg,jpe,gif,svg})
                 shopt -u nullglob
                 image="${files[RANDOM % ${#files[@]}]}"
-                if [[ "$audio_source" == "" ]]; then
-                    audio=${image%.*}".mp3"
-                fi
             else
                 image="$image_source"
-                if [[ "$audio_source" == "" ]]; then
-                    audio=${image%.*}".mp3"
-                fi
             fi
+
+            tmp_audio=${image%.*}
         ;;
     esac
 
@@ -2482,11 +2478,28 @@ get_audio_source(){
         # Get the absolute path.
         audio_source="$(get_full_path "$audio_source")"
 
-        if [[ -f "$audio_source" ]]; then
+        if [[ -d "$audio_source" ]]; then
+                shopt -s nullglob
+                files=("${audio_source%/}"/*.{mp3})
+                shopt -u nullglob
+                audio="${files[RANDOM % ${#files[@]}]}"
+        else
             audio="$audio_source"
+        fi
+    else
+        # use tmp_audio as source
+        if [[ -d "$tmp_audio" ]]; then
+            shopt -s nullglob
+            files=("${tmp_audio%/}"/*.{mp3})
+            shopt -u nullglob
+            audio="${files[RANDOM % ${#files[@]}]}"
+        else
+            audio="$tmp_audio"
         fi
     fi
 
+    # re-assemble with .mp3
+    audio=${audio%.*}".mp3"
     err "Audio: Using audio '$audio'"
 }
 
@@ -2839,9 +2852,11 @@ display_image() {
 }
 
 play_audio(){
-    get_audio_source
+    if [[ "$audio_option" == "on" ]]; then
+        get_audio_source
 
-    afplay "$audio" &
+        afplay "$audio" &
+    fi
 }
 
 to_ascii() {
@@ -4507,6 +4522,7 @@ IMAGE:
 AUDIO:
     --audio_source source       Which audio file to use.
                                 Possible values: '', '/path/to/audio'
+    --audio_option on/off       Enable/Disable play audio when launch                               
 
 SCREENSHOT:
     -s, --scrot /path/to/img    Take a screenshot, if path is left empty the screen-
@@ -4696,6 +4712,7 @@ get_args() {
 
             # Audio options
             "--audio_source") audio_source="$2" ;;
+            "--audio_option") audio_option="$2" ;;
 
             "--ascii_colors")
                 unset ascii_colors
