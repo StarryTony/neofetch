@@ -9,7 +9,7 @@
 # https://github.com/dylanaraps/
 
 # Neofetch version.
-version="3.3.1-git"
+version="3.3.0"
 
 bash_version="${BASH_VERSION/.*}"
 sys_locale="${LANG:-C}"
@@ -160,7 +160,6 @@ get_distro() {
                 fi
             fi
             distro="$(trim_quotes "$distro")"
-            distro="${distro/'NAME='}"
         ;;
 
         "Mac OS X")
@@ -188,7 +187,7 @@ get_distro() {
                     case "$osx_version" in
                         "10."[4-7]*) distro="${distro/${codename}/Mac OS X}" ;;
                         "10."[8-9]* | "10.1"[0-1]*) distro="${distro/${codename}/OS X}" ;;
-                        "10.1"[2-3]*) distro="${distro/${codename}/macOS}" ;;
+                        "10.12"*) distro="${distro/${codename}/macOS}" ;;
                     esac
                     distro="${distro/ ${osx_build}}"
                 ;;
@@ -279,16 +278,13 @@ get_model() {
         "iPhone OS")
             case "$machine_arch" in
                 "iPad1,1") model="iPad" ;;
-                "iPad2,"[1-4]) model="iPad 2" ;;
-                "iPad3,"[1-3]) model="iPad 3" ;;
-                "iPad3,"[4-6]) model="iPad 4" ;;
-                "iPad6,11" | "iPad 6,12") model="iPad 5" ;;
+                "iPad2,"[1-4]) model="iPad2" ;;
+                "iPad3,"[1-3]) model="iPad3" ;;
+                "iPad3,"[4-6]) model="iPad4" ;;
                 "iPad4,"[1-3]) model="iPad Air" ;;
                 "iPad5,"[3-4]) model="iPad Air 2" ;;
                 "iPad6,"[7-8]) model="iPad Pro (12.9 Inch)" ;;
                 "iPad6,"[3-4]) model="iPad Pro (9.7 Inch)" ;;
-                "iPad7,"[1-2]) model="iPad Pro 2 (12.9 Inch)" ;;
-                "iPad7,"[3-4]) model="iPad Pro (10.5 Inch)" ;;
                 "iPad2,"[5-7]) model="iPad mini" ;;
                 "iPad4,"[4-6]) model="iPad mini 2" ;;
                 "iPad4,"[7-9]) model="iPad mini 3" ;;
@@ -309,9 +305,6 @@ get_model() {
                 "iPhone8,4") model="iPhone SE" ;;
                 "iPhone9,1" | "iPhone9,3") model="iPhone 7" ;;
                 "iPhone9,2" | "iPhone9,4") model="iPhone 7 Plus" ;;
-                "iPhone10,1" | "iPhone10,4") model="iPhone 8" ;;
-                "iPhone10,2" | "iPhone10,5") model="iPhone 8 Plus" ;;
-                "iPhone10,3" | "iPhone10,6") model="iPhone X" ;;
 
                 "iPod1,1") model="iPod touch" ;;
                 "ipod2,1") model="iPod touch 2G" ;;
@@ -352,8 +345,6 @@ get_model() {
     model="${model//Default string}"
     model="${model//Not Specified}"
     model="${model//Type1ProductConfigId}"
-    model="${model//INVALID}"
-    model="${model//�}"
 
     case "$model" in
         "Standard PC"*) model="KVM/QEMU (${model})" ;;
@@ -714,11 +705,11 @@ get_wm() {
     else
         case "$os" in
             "Mac OS X")
-                ps_line="$(ps -e | grep -o '[S]pectacle\|[A]methyst\|[k]wm\|[c]hun[k]wm')"
+                ps_line="$(ps -e | grep -o '[S]pectacle\|[A]methyst\|[k]wm\|[c]hunkwm')"
 
                 case "$ps_line" in
-                    *"chunkwm"*) wm="chunkwm" ;;
                     *"kwm"*) wm="Kwm" ;;
+                    *"chunkwm"*) wm="chunkwm" ;;
                     *"Amethyst"*) wm="Amethyst" ;;
                     *"Spectacle"*) wm="Spectacle" ;;
                     *) wm="Quartz Compositor" ;;
@@ -1420,7 +1411,7 @@ get_song() {
     player="$(ps x | awk '!(/ awk|Helper|Cache|ibus|indicator/) && /mpd|mopidy|cmus|mocp|spotify|\
 Google Play|iTunes.app|rhythmbox|banshee|amarok|deadbeef|audacious|\
 xmms2d|gnome-music|lollypop|clementine|pragha|exaile|juk|bluemindo|\
-guayadeque|yarock|qmmp|quodlibet|deepin-music|tomahawk|pogo|elisa/ {printf $5 " " $6; exit}')"
+guayadeque|yarock|qmmp|quodlibet|deepin-music|tomahawk|pogo/ {printf $5 " " $6; exit}')"
 
     get_song_dbus() {
         # Multiple players use an almost identical dbus command to get the information.
@@ -1451,7 +1442,6 @@ guayadeque|yarock|qmmp|quodlibet|deepin-music|tomahawk|pogo|elisa/ {printf $5 " 
         "yarock"*)       get_song_dbus "yarock" ;;
         "deepin-music"*) get_song_dbus "deepinmusic" ;;
         "tomahawk"*)     get_song_dbus "tomahawk" ;;
-        "elisa"*)        get_song_dbus "elisa" ;;
 
         "audacious"*)
             song="$(audtool current-song)"
@@ -1547,18 +1537,14 @@ get_resolution() {
                               awk '/Resolution:/ {printf $2"x"$4" @ "$6"Hz, "}')"
             fi
 
-            if [[ -e "/Library/Preferences/com.apple.windowserver.plist" ]]; then
-                scale_factor="$(PlistBuddy -c "Print DisplayAnyUserSets:0:0:Resolution" \
-                                /Library/Preferences/com.apple.windowserver.plist)"
-            else
-                scale_factor=""
-            fi
+            scale_factor="$(PlistBuddy -c "Print DisplayAnyUserSets:0:0:Resolution" \
+                            /Library/Preferences/com.apple.windowserver.plist)"
 
             # If no refresh rate is empty.
             [[ "$resolution" == *"@ Hz"* ]] && \
                 resolution="${resolution//@ Hz}"
 
-            [[ "${scale_factor%.*}" == 2 ]] && \
+            ((${scale_factor%.*} == 2)) && \
                 resolution="${resolution// @/@2x @}"
 
             if [[ "$refresh_rate" == "off" ]]; then
@@ -1632,12 +1618,7 @@ get_style() {
                     kde_config_file="${kde_config_dir}/kdeglobals"
 
                     kde_theme="$(grep "^${kde}" "$kde_config_file")"
-                    kde_theme="${kde_theme/*=}"
-                    if [[ "$kde" == "font" ]]; then
-                        kde_font_size="${kde_theme#*,}"
-                        kde_font_size="${kde_font_size/,*}"
-                        kde_theme="${kde_theme/,*} ${kde_theme/*,} ${kde_font_size}"
-                    fi
+                    kde_theme="${kde_theme/${kde}*=}"
                     kde_theme="$(uppercase "$kde_theme") [KDE], "
                 else
                     err "Theme: KDE config files not found, skipping."
@@ -1814,6 +1795,19 @@ get_term() {
             esac
         fi
     done
+
+    if [[ "$term_version" == "on" ]]; then
+        case "$term" in
+            "Apple_Terminal")
+                term_version="$(osascript -e 'version of application "Terminal"')"
+            ;;
+            "iTerm2")
+                term_version="$(osascript -e 'version of application "iTerm2"')"
+            ;;
+        esac
+
+        term="$term $term_version"
+    fi
 
     # Log that the function was run.
     term_run=1
@@ -2084,12 +2078,13 @@ get_disk() {
             "perc") disk="${disk_perc}% $(bar "$disk_perc" "100")" ;;
         esac
 
+        subtitle="${subtitle} (${disk_sub})"
         # Append '(disk mount point)' to the subtitle.
-        if [[ -z "$subtitle" ]]; then
-            prin "${disk_sub}" "$disk"
-        else
-            prin "${subtitle} (${disk_sub})" "$disk"
-        fi
+        # if [[ -z "$subtitle" ]]; then
+        #     prin "${disk_sub}" "$disk"
+        # else
+        #     prin "${subtitle} (${disk_sub})" "$disk"
+        # fi
     done
 }
 
@@ -2265,13 +2260,7 @@ get_install_date() {
             return
         ;;
 
-        *"HLOPRSTUWabc"*) # macOS ls
-            install_date="$(ls -dlctUT "$install_file" | awk '{printf $9 " " $6 " "$7 " " $8}')"
-        ;;
-
-        *)
-            install_date="$(ls -dlctT "$install_file" | awk '{printf $9 " " $6 " " $7 " " $8}')"
-        ;;
+        *) install_date="$(ls -dlctT "$install_file" | awk '{printf $9 " " $6 " "$7 " " $8}')" ;;
     esac
 
     install_date="${install_date//-/ }"
@@ -2291,18 +2280,26 @@ get_gpu_driver() {
                           '/Display|3D|VGA/{nr[NR+2]}; NR in nr {printf $2 ", "}')"
             gpu_driver="${gpu_driver%, }"
         ;;
-        "Mac OS X")
-            if [[ "$(kextstat | grep "GeForceWeb")" != "" ]]; then
-                gpu_driver="Nvidia Web Driver"
-            else
-                gpu_driver="macOS Default Graphics Driver"
-            fi
-        ;;
     esac
 }
 
 get_cols() {
+    unset -v blocks blocks2 cols
+    if [[ "$1" != "" ]]; then
+        prin=$1
+    else
+        # Tell info() that we printed manually.    
+        prin=1 
+    fi
+
     if [[ "$color_blocks" == "on" ]]; then
+        block_width=${block_width// /}
+        if [[ "$block_width" != "" ]]; then
+            pre_block_width=$block_width
+        else
+            block_width=$pre_block_width
+        fi
+
         # Convert the width to space chars.
         printf -v block_width "%${block_width}s"
 
@@ -2313,8 +2310,8 @@ get_cols() {
         # Generate the string.
         for ((start; start<=end; start++)); do
             case "$start" in
-                [0-6]) blocks+="${reset}\033[3${start}m\033[4${start}m${block_width}" ;;
-                7) blocks+="${reset}\033[3${start}m\033[4${start}m${block_width}" ;;
+                # [0-7]) blocks+="${reset}\033[3${start}m\033[4${start}m${block_width}" ;;
+                # 7) blocks+="${reset}\033[3${start}m\033[4${start}m${block_width}" ;;
                 *) blocks2+="\033[38;5;${start}m\033[48;5;${start}m${block_width}" ;;
             esac
         done
@@ -2333,13 +2330,14 @@ get_cols() {
         # Add block height to info height.
         info_height="$((info_height+=block_height+2))"
 
-        printf "%b\n" "\033[${text_padding}C${zws}${cols}"
+        if [[ "$prin" == "1" ]]; then
+            printf "%b" "\033[$(($text_padding))C${zws}  ${cols}"
+        fi
+
+        # printf "%b\n" "\033[${text_padding}C${zws}${cols}"
     fi
 
-    unset -v blocks blocks2 cols
-
-    # Tell info() that we printed manually.
-    prin=1
+    # unset -v blocks blocks2 cols
 }
 
 # IMAGES
@@ -2405,8 +2403,8 @@ get_ascii() {
         [[ "$image_source" =~ \.(png|jpg|jpe|jpeg|gif)$ ]] && \
             err "Image: Source is image file but ascii backend was selected. Using distro ascii."
 
-        if [[ -d "ASCIIDIR" ]]; then
-            ascii_dir="ASCIIDIR"
+        if [[ -d "/usr/local/Cellar/neofetch/3.3.0/share/neofetch/ascii/distro" ]]; then
+            ascii_dir="/usr/local/Cellar/neofetch/3.3.0/share/neofetch/ascii/distro"
         else
             [[ -z "$script_dir" ]] && script_dir="$(get_full_path "$0")"
             ascii_dir="${script_dir%/*}/ascii/distro"
@@ -2464,14 +2462,32 @@ get_image_source() {
                 files=("${image_source%/}"/*.{png,jpg,jpeg,jpe,gif,svg})
                 shopt -u nullglob
                 image="${files[RANDOM % ${#files[@]}]}"
-
+                if [[ "$audio_source" == "" ]]; then
+                    audio=${image%.*}".mp3"
+                fi
             else
                 image="$image_source"
+                if [[ "$audio_source" == "" ]]; then
+                    audio=${image%.*}".mp3"
+                fi
             fi
         ;;
     esac
 
     err "Image: Using image '$image'"
+}
+
+get_audio_source(){
+    if [[ "$audio_source" != "" ]]; then
+        # Get the absolute path.
+        audio_source="$(get_full_path "$audio_source")"
+
+        if [[ -f "$audio_source" ]]; then
+            audio="$audio_source"
+        fi
+    fi
+
+    err "Audio: Using audio '$audio'"
 }
 
 get_wallpaper() {
@@ -2516,7 +2532,7 @@ get_wallpaper() {
 
                 *)
                     if type -p feh >/dev/null && [[ -f "${HOME}/.fehbg" ]]; then
-                        image="$(awk -F\' '/feh/ {printf $(NF-1)}' "${HOME}/.fehbg")"
+                        image="$(awk -F\' '/feh/ {printf $2}' "${HOME}/.fehbg")"
 
                     elif type -p nitrogen >/dev/null; then
                         image="$(awk -F'=' '/file/ {printf $2;exit;}' \
@@ -2649,6 +2665,11 @@ get_image_size() {
     font_width="$((term_width / columns))"
     font_height="$((term_height / lines))"
 
+    # temporary fix: by forcing font_width as 7 to enable split sessions have consistent print results 
+    if [[ $font_width -ge 7 ]]; then
+    	font_width=7
+    fi
+
     case "$image_size" in
         "auto")
             image_size="$((columns * font_width / 2))"
@@ -2686,7 +2707,7 @@ get_image_size() {
 make_thumbnail() {
     # Name the thumbnail using variables so we can
     # use it later.
-    image_name="$crop_mode-$crop_offset-$width-$height-${image//'/'/_}"
+    image_name="$crop_mode-$crop_offset-$width-$height-${image##*/}"
 
     # Handle file extensions.
     case "${image##*.}" in
@@ -2755,6 +2776,8 @@ make_thumbnail() {
 
     # The final image.
     image="$thumbnail_dir/$image_name"
+
+    err "Image: Using thumbnail image '$image'"
 }
 
 display_image() {
@@ -2813,6 +2836,12 @@ display_image() {
             zws="\xE2\x80\x8B\x20"
         ;;
     esac
+}
+
+play_audio(){
+    get_audio_source
+
+    afplay "$audio" &
 }
 
 to_ascii() {
@@ -2966,7 +2995,8 @@ info() {
     output="$(trim "${!2:-${!1}}")"
 
     if [[ "$2" && "${output// }" ]]; then
-        prin "$1" "$output"
+        fancy_header
+        prin "$subtitle" "$output"
 
     elif [[ "${output// }" ]]; then
         prin "$output"
@@ -2976,6 +3006,37 @@ info() {
     fi
 
     unset -v subtitle
+}
+
+fancy_header(){
+    if [[ $fancy_header == "on" ]]; then
+        if [[ "$1" != "" ]]; then
+            blk_count=$1
+        else
+            blk_count=0
+        fi
+
+        for (( i = 0; i < 1; i++ )); do
+            color_index=$(( RANDOM % 15 + 1 ))
+
+            if [[ $((color_index+$blk_count+1)) -ge 7 ]] && [[ $color_index -le 7 ]]; then
+                left_offset=$(( RANDOM % $((blk_count+1)) + 1 ))
+                color_index=$(( color_index - $left_offset -1))
+            fi
+
+            block_range=($color_index $((color_index + $blk_count))) 
+            get_cols "0"
+
+            if [[ $left == "" ]]; then
+                cols="     $cols"" $(trim "${cols//$'\033[0m'}")"
+                left="full"
+            else
+                cols="  $cols   "" $(trim "${cols//$'\033[0m'}")"
+                left=""
+            fi
+            
+        done
+    fi
 }
 
 prin() {
@@ -2996,26 +3057,25 @@ prin() {
 
     # Format the output.
     string="${string/:/${reset}${colon_color}:${info_color}}"
-    string="${subtitle_color}${bold}${string}"
+    string="$cols${subtitle_color}${bold}${string}"
 
     # Print the info.
-    printf "%b\n" "${text_padding:+\033[${text_padding}C}${zws}${string}${reset}"
+    # note: extra white-space needed to fix text flicker
+    printf "%b\n" "${text_padding:+\033[${text_padding}C}${zws}${string}  ${reset}"
 
     # Calculate info height.
     ((++info_height))
-
-    # Log that prin was used.
-    prin=1
 }
 
 get_underline() {
     if [[ "$underline_enabled" == "on" ]]; then
         printf -v underline "%${length}s"
-        printf "%b%b\n" "${text_padding:+\033[${text_padding}C}${zws}${underline_color}" \
-                        "${underline// /$underline_char}${reset}"
+        # printf "%b%b\n" "${text_padding:+\033[${text_padding}C}${zws}${underline_color}" \
+        #                 "${underline// /$underline_char}${reset}"
         unset -v length
     fi
-    prin=1
+
+    prin "${underline// /$underline_char}"
 }
 
 get_line_break() {
@@ -3227,11 +3287,6 @@ get_distro_colors() {
             ascii_file="cloveros"
         ;;
 
-        "Container Linux by CoreOS"*)
-            set_colors 4 7 1
-            ascii_file="coreos"
-        ;;
-
         "crux_small")
             set_colors 4 5 7 6
             ascii_file="crux_small"
@@ -3412,11 +3467,6 @@ get_distro_colors() {
             ascii_file="lubuntu"
         ;;
 
-        "Lunar"*)
-            set_colors 4 7 3
-            ascii_file="lunar"
-        ;;
-
         "mac"*"_small")
             set_colors 2 3 1 5 4
             ascii_file="mac_small"
@@ -3570,11 +3620,6 @@ get_distro_colors() {
         "Peppermint"*)
             set_colors 1 7 3
             ascii_file="peppermint"
-        ;;
-
-        "Pop!_OS"*)
-            set_colors 6 7
-            ascii_file="pop_os"
         ;;
 
         "Porteus"*)
@@ -3920,8 +3965,8 @@ get_full_path() {
 }
 
 get_default_config() {
-    if [[ -f "CONFDIR/config.conf" ]]; then
-        default_config="CONFDIR/config.conf"
+    if [[ -f "/usr/local/etc/neofetch/config.conf" ]]; then
+        default_config="/usr/local/etc/neofetch/config.conf"
 
     else
         [[ -z "$script_dir" ]] && script_dir="$(get_full_path "$0")"
@@ -3953,8 +3998,8 @@ get_user_config() {
     elif [[ -f "${XDG_CONFIG_HOME}/neofetch/config.conf" ]]; then
         config_file="${XDG_CONFIG_HOME}/neofetch/config.conf"
 
-    elif [[ -f "CONFDIR/config.conf" ]]; then
-        cp "CONFDIR/config.conf" "${XDG_CONFIG_HOME}/neofetch"
+    elif [[ -f "/usr/local/etc/neofetch/config.conf" ]]; then
+        cp "/usr/local/etc/neofetch/config.conf" "${XDG_CONFIG_HOME}/neofetch"
         config_file="${XDG_CONFIG_HOME}/neofetch/config.conf"
 
     else
@@ -4340,6 +4385,7 @@ INFO:
     --gtk3 on/off               Enable/Disable gtk3 theme/font/icons output
     --shell_path on/off         Enable/Disable showing \$SHELL path
     --shell_version on/off      Enable/Disable showing \$SHELL version
+    --term_version on/off       Enable/Disable showing \$term version
     --disk_show value           Which disks to display.
                                 Possible values: '/', '/dev/sdXX', '/path/to/mount point'
 
@@ -4372,6 +4418,7 @@ COLOR BLOCKS:
     --block_width num           Width of color blocks in spaces
     --block_height num          Height of color blocks in lines
     --block_range num num       Range of colors to print as blocks
+    --fancy_header on/off       Enable/Disable fancy_header for text info
 
 BARS:
     --bar_char 'elapsed char' 'total char'
@@ -4457,6 +4504,10 @@ IMAGE:
 
     --clean                     Delete cached files and thumbnails.
 
+AUDIO:
+    --audio_source source       Which audio file to use.
+                                Possible values: '', '/path/to/audio'
+
 SCREENSHOT:
     -s, --scrot /path/to/img    Take a screenshot, if path is left empty the screen-
                                 shot function will use \$scrot_dir and \$scrot_name.
@@ -4538,6 +4589,7 @@ get_args() {
             "--gtk3") gtk3="$2" ;;
             "--shell_path") shell_path="$2" ;;
             "--shell_version") shell_version="$2" ;;
+            "--term_version") term_version="$2" ;;
             "--ip_host") public_ip_host="$2" ;;
             "--song_shorthand") song_shorthand="$2" ;;
             "--install_time") install_time="$2" ;;
@@ -4594,6 +4646,7 @@ get_args() {
             "--block_range") block_range=("$2" "$3") ;;
             "--block_width") block_width="$2" ;;
             "--block_height") block_height="$2" ;;
+            "--fancy_header") fancy_header="$2" ;;
 
             # Bars
             "--bar_char")
@@ -4640,6 +4693,9 @@ get_args() {
                 rm -rf "/tmp/neofetch/"
                 exit
             ;;
+
+            # Audio options
+            "--audio_source") audio_source="$2" ;;
 
             "--ascii_colors")
                 unset ascii_colors
@@ -4726,6 +4782,7 @@ main() {
     old_functions
     get_cache_dir
     print_info
+    play_audio
     dynamic_prompt
 
     # w3m-img: Draw the image a second time to fix
