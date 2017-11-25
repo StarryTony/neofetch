@@ -2474,27 +2474,84 @@ get_image_source() {
 }
 
 get_audio_source(){
+    # try to find best match:
+    # 1. if audio_source given,
+    #   a. if audio_source is dir, 
+    #   b. if audio_source is audio, use this audio
+    # 2. if no audio_source,
+    #   a. search current dir if any audio has the same name or prefix-name
+    #   b. if a. failed, search sub-dir if any audio has the same name or prefix-name
+
     if [[ "$audio_source" != "" ]]; then
         # Get the absolute path.
         audio_source="$(get_full_path "$audio_source")"
 
         if [[ -d "$audio_source" ]]; then
-                shopt -s nullglob
-                files=("${audio_source%/}"/*.{mp3})
-                shopt -u nullglob
-                audio="${files[RANDOM % ${#files[@]}]}"
+                tmp_middle=${tmp_audio##*/}
+
+                if [[ -f "$tmp_middle.mp3" ]]; then
+                    audio="$tmp_middle"
+                else
+                    tmp_prefix=$(printf '%s' "$tmp_audio" | sed 's/\_[0-9]*$//g')
+                    tmp_middle=${tmp_audio##*/}
+
+                    if [[ -f "$audio_source/$tmp_middle.mp3" ]]; then
+                        audio="$audio_source/$tmp_middle"
+                    else
+                        files=(`find "$audio_source" -name "*.mp3"`)
+                    
+                        # shopt -s nullglob
+                        # files=("${tmp_prefix%/}"/*.{mp3})
+                        # shopt -u nullglob
+
+                        audio="${files[RANDOM % ${#files[@]}]}" 
+                    fi
+                fi
+
+                # shopt -s nullglob
+                # files=("${audio_source%/}"/*.{mp3})
+                # shopt -u nullglob
+                # audio="${files[RANDOM % ${#files[@]}]}"
         else
             audio="$audio_source"
         fi
     else
         # use tmp_audio as source
-        if [[ -d "$tmp_audio" ]]; then
+        if [[ -f "$tmp_audio.mp3" ]]; then
+            # an exact match found
+            audio="$tmp_audio"
+        elif [[ -d "$tmp_audio" ]]; then
             shopt -s nullglob
             files=("${tmp_audio%/}"/*.{mp3})
             shopt -u nullglob
             audio="${files[RANDOM % ${#files[@]}]}"
         else
-            audio="$tmp_audio"
+            # for a set of files with the same prefix: *_0.mp3 *_1.mp3 *_2.mp3 etc., 
+            # you can use the same audio_source.
+            # If need to use different audio for each image file, rename image and audio with the same name
+            tmp_prefix=$(printf '%s' "$tmp_audio" | sed 's/\_[0-9]*$//g')
+            tmp_middle=${tmp_audio##*/}
+            tmp_middle_nosuf=${tmp_prefix##*/}
+            
+            if [[ -f "$tmp_prefix.mp3" ]]; then
+                audio="$tmp_prefix"
+            elif [[ -d "$tmp_prefix" ]]; then
+                if [[ -f "$tmp_prefix/$tmp_middle.mp3" ]]; then
+                    audio="$tmp_prefix/$tmp_middle"
+                elif [[ -f "$tmp_prefix/$tmp_middle_nosuf.mp3" ]]; then
+                    audio="$tmp_prefix/$tmp_middle_nosuf"
+                else
+                    # for "iterm2" shopt may not work, use "find" instead
+                    files=(`find "$tmp_prefix" -name "*.mp3"`)
+                    
+                    # shopt -s nullglob
+                    # files=("${tmp_prefix%/}"/*.{mp3})
+                    # shopt -u nullglob
+
+                    audio="${files[RANDOM % ${#files[@]}]}" 
+                fi  
+            fi
+            
         fi
     fi
 
