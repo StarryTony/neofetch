@@ -1,3 +1,9 @@
+# Neofetch - theme sound support
+This is a customised Neofetch. Tests passed on MacOS High Sierra.
+
+Please check [Youtube demo](https://youtu.be/pNU8HPkPNko).
+
+
 # Neofetch
 
 [![Gitter](https://badges.gitter.im/dylanaraps/fetch.svg)](https://gitter.im/dylanaraps/fetch?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
