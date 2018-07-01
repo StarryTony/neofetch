@@ -1,7 +1,8 @@
 # Neofetch - theme sound support
-This is a customised Neofetch. Tests passed on MacOS High Sierra.
+This is a customised Neofetch. Tests passed on MacOS High Sierra. Please click to check the DEMO video: 
 
-Please check [![Youtube Demo](https://img.youtube.com/vi/pNU8HPkPNko/0.jpg)](https://youtu.be/pNU8HPkPNko).
+
+[![Youtube Demo](https://img.youtube.com/vi/pNU8HPkPNko/0.jpg)](https://youtu.be/pNU8HPkPNko).
 
 
 # Neofetch
