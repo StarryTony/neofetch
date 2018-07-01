@@ -1,4 +1,4 @@
-# Neofetch - theme sound support
+# Neofetch - theme sound support & extra fancy bar
 This is a customised Neofetch. Tests passed on MacOS High Sierra. Please click to check the DEMO video: 
 
 
