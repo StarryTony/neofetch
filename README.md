@@ -1,5 +1,5 @@
 # Neofetch - theme sound support & extra fancy bar
-This is a customised Neofetch. Tests passed on MacOS High Sierra. Please click to check the DEMO video: 
+This is a customised Neofetch. It fixes displaying bugs for MacOS and add theme sound support. Tests passed on MacOS High Sierra. Please click to check the DEMO video: 
 
 
 [![Youtube Demo](https://img.youtube.com/vi/pNU8HPkPNko/0.jpg)](https://youtu.be/pNU8HPkPNko).
